@@ -1,0 +1,45 @@
+// Definitions for pimoroni fan shim
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			fanshim_button_pinctrl: fanshim_button_pinctrl {
+				brcm,pins = <3>; // BRCM GPIO3
+				brcm,function = <0>; // GPIO Input
+				brcm,pull = <2>; // configure pull-up termination, so this will be an active-low signal
+			};
+		};
+	};
+	fragment@1 {
+		target-path = "/soc";
+		__overlay__ {
+			fanshim_button {
+				compatible = "gpio-keys";
+				status = "okay";
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&fanshim_button_pinctrl>;
+
+				// Define a key that sends KEY_POWER when pressed
+				fanshim_button_key: button_key {
+					label = "fanshim";
+					linux,code = <116>; // KEY_POWER
+					gpios = <&gpio 3 1>;
+					debounce-interval = <100>; // ms
+				};
+			};
+		};
+	};
+
+	__overrides__ {
+		gpio_pin = <&fanshim_button_key>,"gpios.4",
+		           <&fanshim_button_pinctrl>,"brcm,pins:0";
+		button_event = <&fanshim_button_key>,"linux,code:0";
+	};
+
+};
